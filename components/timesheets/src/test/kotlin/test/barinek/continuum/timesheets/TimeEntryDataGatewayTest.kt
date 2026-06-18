@@ -8,8 +8,8 @@ import org.junit.Test
 import java.time.LocalDate
 import kotlin.test.assertEquals
 
-class TimeEntryDataGatewayTest() {
-    val dataSource = DataSourceConfig().createDataSource("timesheets")
+class TimeEntryDataGatewayTest {
+    val dataSource = DataSourceConfig().createDataSource("jdbc:mysql://localhost:3306/timesheets_test?user=uservices&password=uservices")
     val template = JdbcTemplate(dataSource)
     val gateway = TimeEntryDataGateway(template)
     val now: LocalDate = LocalDate.now()

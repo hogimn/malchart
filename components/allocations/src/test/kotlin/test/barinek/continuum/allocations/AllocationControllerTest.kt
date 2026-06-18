@@ -1,32 +1,32 @@
 package test.barinek.continuum.allocations
 
 import com.fasterxml.jackson.core.type.TypeReference
-import com.nhaarman.mockito_kotlin.any
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.whenever
-import io.barinek.continuum.allocations.*
+import io.barinek.continuum.allocations.AllocationController
+import io.barinek.continuum.allocations.AllocationDataGateway
+import io.barinek.continuum.allocations.AllocationInfo
+import io.barinek.continuum.allocations.ProjectClient
+import io.barinek.continuum.allocations.ProjectInfo
 import io.barinek.continuum.jdbcsupport.DataSourceConfig
 import io.barinek.continuum.jdbcsupport.JdbcTemplate
-import io.barinek.continuum.restsupport.BasicApp
+import io.barinek.continuum.restsupport.BasicServer
 import io.barinek.continuum.testsupport.TestControllerSupport
 import io.barinek.continuum.testsupport.TestScenarioSupport
-import org.apache.http.message.BasicNameValuePair
-import org.eclipse.jetty.server.handler.HandlerList
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 import java.time.LocalDate
 import kotlin.test.assertEquals
 
 class AllocationControllerTest : TestControllerSupport() {
-    val dataSource = DataSourceConfig().createDataSource("allocations")
+    val dataSource = DataSourceConfig().createDataSource("jdbc:mysql://localhost:3306/allocations_test?user=uservices&password=uservices")
     val projectClient = mock<ProjectClient>()
 
-    internal var app: BasicApp = object : BasicApp() {
-        override fun getPort() = 8081
-
-        override fun handlerList() = HandlerList().apply {
-            addHandler(AllocationController(mapper, AllocationDataGateway(JdbcTemplate(dataSource)), projectClient))
+    private val server = object : BasicServer(8081) {
+        override fun registerContexts() {
+            context("/allocations", AllocationController(mapper, AllocationDataGateway(JdbcTemplate(dataSource)), projectClient))
         }
     }
 
@@ -35,12 +35,12 @@ class AllocationControllerTest : TestControllerSupport() {
         JdbcTemplate(dataSource).apply {
             execute("delete from allocations")
         }
-        app.start()
+        server.start()
     }
 
     @After
     fun tearDown() {
-        app.stop()
+        server.stop()
     }
 
     @Test
@@ -69,14 +69,14 @@ class AllocationControllerTest : TestControllerSupport() {
 
         val json = "{\"projectId\":55432,\"userId\":4765,\"firstDay\":\"2014-05-16\",\"lastDay\":\"2014-05-26\"}"
         val response = template.post("http://localhost:8081/allocations", "application/json", json)
-        assert(response.isBlank())
+        assertEquals("status_code 422", response)
     }
 
     @Test
     fun testFind() {
         TestScenarioSupport(dataSource).loadTestScenario("jacks-test-scenario")
 
-        val response = template.get("http://localhost:8081/allocations", "application/json", BasicNameValuePair("projectId", "55432"))
+        val response = template.get("http://localhost:8081/allocations", "application/json", Pair("projectId", "55432"))
         val list: List<AllocationInfo> = mapper.readValue(response, object : TypeReference<List<AllocationInfo>>() {})
         val actual = list.first()
 

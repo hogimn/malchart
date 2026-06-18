@@ -1,60 +1,39 @@
 buildscript {
-    ext.kotlin_version = '1.3.50'
-    ext.jackson_version = '2.11.0'
-    ext.jedis_version = '3.2.0'
-    ext.mockk_version = '1.9.3.kotlin12'
-
-    repositories {
-        mavenCentral()
-        jcenter()
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
+    ext.hikari_version = "7.0.2"
+    ext.jackson_version = "2.19.0"
+    ext.jedis_version = "7.5.2"
+    ext.junit_version = "4.13.2"
+    ext.kotlin_version = "2.3.20"
+    ext.logback_version = "1.5.34"
+    ext.mockito_kotlin_version = "5.4.0"
+    ext.mockito_version = "5.14.2"
+    ext.mysql_connector_version = "9.3.0"
+    ext.slf4j_version = "2.0.17"
 }
 
 plugins {
-    id "org.flywaydb.flyway" version "6.4.2"
+    id "org.jetbrains.kotlin.jvm" version "$kotlin_version"
+}
+
+repositories {
+    mavenCentral()
 }
 
 subprojects {
-    group "io.barinek.continuum"
-
     apply plugin: 'kotlin'
-
-    defaultTasks "clean", "build"
 
     repositories {
         mavenCentral()
-        jcenter()
     }
 
     dependencies {
-        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-        compile "org.jetbrains.kotlinx:kotlinx-support-jdk8:0.3"
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version")
+        implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version")
+        implementation("org.slf4j:slf4j-api:$slf4j_version")
 
-        compile "com.fasterxml.jackson.core:jackson-core:$jackson_version"
-        compile "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
-        compile "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
-
-        compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version"
-        compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
-
-        compile "org.slf4j:slf4j-api:1.7.30"
-        compile "org.slf4j:slf4j-simple:1.7.30"
-
-        testCompile 'junit:junit:4.13'
-        testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
-
-        testCompile "org.mockito:mockito-core:3.3.3"
-        testCompile "com.nhaarman:mockito-kotlin:1.6.0"
-        testCompile "org.hamcrest:hamcrest-library:2.2"
-    }
-
-    sourceSets {
-        main.kotlin.srcDir "src/main/kotlin"
-        test.kotlin.srcDir "src/test/kotlin"
-
-        test.resources.srcDir "src/test/resources"
+        testImplementation("org.mockito.kotlin:mockito-kotlin:$mockito_kotlin_version")
+        testImplementation("junit:junit:$junit_version")
+        testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+        testImplementation("org.mockito:mockito-core:$mockito_version")
     }
 }

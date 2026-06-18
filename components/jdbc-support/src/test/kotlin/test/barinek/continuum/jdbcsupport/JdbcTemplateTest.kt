@@ -6,8 +6,8 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-class JdbcTemplateTest() {
-    val dataSource = DataSourceConfig().createDataSource("registration")
+class JdbcTemplateTest {
+    val dataSource = DataSourceConfig().createDataSource("jdbc:mysql://localhost:3306/registration_test?user=uservices&password=uservices")
     val template = JdbcTemplate(dataSource)
 
     @Test

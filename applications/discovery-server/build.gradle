@@ -1,17 +1,19 @@
-version "1.0-SNAPSHOT"
-
 dependencies {
-    compile project(":components:redis-support")
-    compile project(":components:rest-support")
+    implementation(project(":components:redis-support"))
+    implementation(project(":components:rest-support"))
 
-    compile project(":components:discovery")
+    implementation(project(":components:discovery"))
+
+    implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation("redis.clients:jedis:$jedis_version")
 }
 
 jar {
     manifest {
         attributes "Main-Class": "io.barinek.continuum.discovery.AppKt"
     }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }

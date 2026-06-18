@@ -1,10 +1,12 @@
 package io.barinek.continuum.jdbcsupport
 
-import kotlinx.support.jdk7.use
-import java.sql.*
+import java.sql.CallableStatement
+import java.sql.Connection
 import java.sql.Date
+import java.sql.PreparedStatement
+import java.sql.ResultSet
+import java.sql.Statement
 import java.time.LocalDate
-import java.util.*
 import javax.sql.DataSource
 
 class JdbcTemplate(val dataSource: DataSource) {
@@ -38,10 +40,10 @@ class JdbcTemplate(val dataSource: DataSource) {
 
     fun <T> findObject(sql: String, mapper: (ResultSet) -> T, id: Long): T? {
         val list = query(sql, { ps -> ps.setLong(1, id) }, mapper)
-        when {
-            list.isEmpty() -> return null
+        return when {
+            list.isEmpty() -> null
 
-            else -> return list.first()
+            else -> list.first()
         }
     }
 

@@ -1,29 +1,27 @@
 package io.barinek.continuum.timesheets
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.barinek.continuum.restsupport.BasicHandler
-import org.eclipse.jetty.server.Request
-import java.util.Arrays.asList
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import com.sun.net.httpserver.HttpExchange
+import io.barinek.continuum.restsupport.BasicController
 
-class TimeEntryController(val mapper: ObjectMapper, val gateway: TimeEntryDataGateway, val client: ProjectClient) : BasicHandler() {
+class TimeEntryController(val mapper: ObjectMapper, val gateway: TimeEntryDataGateway, val client: ProjectClient) : BasicController() {
 
-    override fun handle(s: String, request: Request, httpServletRequest: HttpServletRequest, httpServletResponse: HttpServletResponse) {
-        post("/time-entries", asList("application/json", "application/vnd.appcontinuum.v1+json"), request, httpServletResponse) {
-            val entry = mapper.readValue(request.reader, TimeEntryInfo::class.java)
+    override fun handle(exchange: HttpExchange): Boolean {
+        return post(exchange, "/time-entries", listOf("application/json", "application/vnd.appcontinuum.v1+json")) {
+            val entry = mapper.readValue(body(exchange), TimeEntryInfo::class.java)
 
             if (projectIsFunded(entry.projectId)) {
                 val record = gateway.create(entry.projectId, entry.userId, entry.date, entry.hours)
-                mapper.writeValue(httpServletResponse.outputStream, TimeEntryInfo(record.id, record.projectId, record.userId, record.date, record.hours, "entry info"))
+                mapper.writeValueAsString(TimeEntryInfo(record.id, record.projectId, record.userId, record.date, record.hours, "entry info"))
+            } else {
+                throw IllegalStateException("Project ${entry.projectId} is not active")
             }
-        }
-        get("/time-entries", asList("application/json", "application/vnd.appcontinuum.v1+json"), request, httpServletResponse) {
-            val userId = request.getParameter("userId")
+        } || get(exchange, "/time-entries", listOf("application/json", "application/vnd.appcontinuum.v1+json")) {
+            val userId = parameters(exchange)["userId"]!!
             val list = gateway.findBy(userId.toLong()).map { record ->
                 TimeEntryInfo(record.id, record.projectId, record.userId, record.date, record.hours, "entry info")
             }
-            mapper.writeValue(httpServletResponse.outputStream, list)
+            mapper.writeValueAsString(list)
         }
     }
 

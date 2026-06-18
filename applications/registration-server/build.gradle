@@ -1,20 +1,23 @@
-version "1.0-SNAPSHOT"
-
 dependencies {
-    compile project(":components:discovery-support")
-    compile project(":components:jdbc-support")
-    compile project(":components:rest-support")
+    implementation(project(":components:discovery-support"))
+    implementation(project(":components:jdbc-support"))
+    implementation(project(":components:rest-support"))
 
-    compile project(":components:accounts")
-    compile project(":components:projects")
-    compile project(":components:users")
+    implementation(project(":components:accounts"))
+    implementation(project(":components:projects"))
+    implementation(project(":components:users"))
+
+    implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation("com.zaxxer:HikariCP:$hikari_version")
+    implementation("com.mysql:mysql-connector-j:$mysql_connector_version")
 }
 
 jar {
     manifest {
         attributes "Main-Class": "io.barinek.continuum.registration.AppKt"
     }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }

@@ -5,35 +5,32 @@ import io.barinek.continuum.discovery.DiscoveryController
 import io.barinek.continuum.discovery.InstanceDataGateway
 import io.barinek.continuum.discovery.InstanceInfo
 import io.barinek.continuum.redissupport.RedisConfig
-import io.barinek.continuum.restsupport.BasicApp
+import io.barinek.continuum.restsupport.BasicServer
 import io.barinek.continuum.testsupport.TestControllerSupport
-import org.apache.http.message.BasicNameValuePair
-import org.eclipse.jetty.server.handler.HandlerList
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import redis.clients.jedis.params.SetParams
 import kotlin.test.assertEquals
 
 class DiscoveryControllerTest : TestControllerSupport() {
-    val pool = RedisConfig().getPool("discovery")
+    val client = RedisConfig().getClient("localhost", "foobared")
 
-    internal var app: BasicApp = object : BasicApp() {
-        override fun getPort() = 8081
-
-        override fun handlerList() = HandlerList().apply {
-            addHandler(DiscoveryController(mapper, InstanceDataGateway(pool, 5000)))
+    private val server = object : BasicServer(8081) {
+        override fun registerContexts() {
+            context("/discovery/apps", DiscoveryController(mapper, InstanceDataGateway(client, 5000)))
         }
     }
 
     @Before
     fun setUp() {
-        pool.resource.flushAll()
-        app.start()
+        client.flushAll()
+        server.start()
     }
 
     @After
     fun tearDown() {
-        app.stop()
+        server.stop()
     }
 
     @Test
@@ -48,13 +45,11 @@ class DiscoveryControllerTest : TestControllerSupport() {
 
     @Test
     fun testFind() {
-        val resource = pool.resource
+        client.set("allocations:http://localhost:8081", "http://localhost:8081", SetParams().px(5000L))
+        client.set("allocations:http://localhost:8082", "http://localhost:8083", SetParams().px(5000L))
+        client.set("allocations:http://localhost:8083", "http://localhost:8083", SetParams().px(5000L))
 
-        resource.psetex("allocations:http://localhost:8081", 5000L, "http://localhost:8081")
-        resource.psetex("allocations:http://localhost:8082", 5000L, "http://localhost:8083")
-        resource.psetex("allocations:http://localhost:8083", 5000L, "http://localhost:8083")
-
-        val response = template.get("http://localhost:8081/discovery/apps", "application/json", BasicNameValuePair("appId", "allocations"))
+        val response = template.get("http://localhost:8081/discovery/apps", "application/json", Pair("appId", "allocations"))
 
         val instances: List<InstanceInfo> = mapper.readValue(response, object : TypeReference<List<InstanceInfo>>() {})
         assertEquals(3, instances.size)
@@ -66,14 +61,12 @@ class DiscoveryControllerTest : TestControllerSupport() {
 
     @Test
     fun testMixed() {
-        val resource = pool.resource
+        client.set("allocations:http://localhost:8081", "http://localhost:8081", SetParams().px(5000L))
+        client.set("backlog:http://localhost:8082", "http://localhost:8083", SetParams().px(5000L))
+        client.set("timesheets:http://localhost:8083", "http://localhost:8083", SetParams().px(5000L))
+        client.set("registration:http://localhost:8084", "http://localhost:8084", SetParams().px(5000L))
 
-        resource.psetex("allocations:http://localhost:8081", 5000L, "http://localhost:8081")
-        resource.psetex("backlog:http://localhost:8082", 5000L, "http://localhost:8083")
-        resource.psetex("timesheets:http://localhost:8083", 5000L, "http://localhost:8083")
-        resource.psetex("registration:http://localhost:8084", 5000L, "http://localhost:8084")
-
-        val response = template.get("http://localhost:8081/discovery/apps", "application/json", BasicNameValuePair("appId", "allocations"))
+        val response = template.get("http://localhost:8081/discovery/apps", "application/json", Pair("appId", "allocations"))
 
         val instances: List<InstanceInfo> = mapper.readValue(response, object : TypeReference<List<InstanceInfo>>() {})
         assertEquals(1, instances.size)
@@ -81,7 +74,7 @@ class DiscoveryControllerTest : TestControllerSupport() {
 
     @Test
     fun testEmpty() {
-        val response = template.get("http://localhost:8081/discovery/apps", "application/json", BasicNameValuePair("appId", "allocations"))
+        val response = template.get("http://localhost:8081/discovery/apps", "application/json", Pair("appId", "allocations"))
 
         val instances: List<InstanceInfo> = mapper.readValue(response, object : TypeReference<List<InstanceInfo>>() {})
         assertEquals(0, instances.size)

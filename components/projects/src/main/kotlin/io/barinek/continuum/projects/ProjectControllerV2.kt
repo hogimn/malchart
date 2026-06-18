@@ -1,33 +1,30 @@
 package io.barinek.continuum.projects
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.barinek.continuum.restsupport.BasicHandler
-import org.eclipse.jetty.server.Request
-import java.util.Arrays.asList
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import com.sun.net.httpserver.HttpExchange
+import io.barinek.continuum.restsupport.BasicController
 
-class ProjectControllerV2(val mapper: ObjectMapper, val gateway: ProjectDataGateway) : BasicHandler() {
+class ProjectControllerV2(val mapper: ObjectMapper, val gateway: ProjectDataGateway) : BasicController() {
+    private val mediaTypes = listOf("application/vnd.appcontinuum.v2+json")
 
-    override fun handle(s: String, request: Request, httpServletRequest: HttpServletRequest, httpServletResponse: HttpServletResponse) {
-        post("/projects", asList("application/vnd.appcontinuum.v2+json"), request, httpServletResponse) {
-            val project = mapper.readValue(request.reader, ProjectInfoV2::class.java)
+    override fun handle(exchange: HttpExchange): Boolean {
+        return post(exchange, "/projects", mediaTypes) {
+            val project = mapper.readValue(body(exchange), ProjectInfoV2::class.java)
             val record = gateway.create(project.accountId, project.name, project.active, project.funded)
-            mapper.writeValue(httpServletResponse.outputStream, ProjectInfoV2(record.id, record.accountId, record.name, record.active, record.funded, "project info"))
-        }
-        get("/projects", asList("application/vnd.appcontinuum.v2+json"), request, httpServletResponse) {
-            val accountId = request.getParameter("accountId")
+            mapper.writeValueAsString(ProjectInfoV2(record.id, record.accountId, record.name, record.active, record.funded, "project info"))
+        } || get(exchange, "/projects", mediaTypes) {
+            val accountId = parameters(exchange)["accountId"]!!
             val list = gateway.findBy(accountId.toLong()).map { record ->
                 ProjectInfoV2(record.id, record.accountId, record.name, record.active, record.funded, "project info")
             }
-            mapper.writeValue(httpServletResponse.outputStream, list)
-        }
-        get("/project", asList("application/vnd.appcontinuum.v2+json"), request, httpServletResponse) {
-            val projectId = request.getParameter("projectId")
+            mapper.writeValueAsString(list)
+        } || get(exchange, "/project", mediaTypes) {
+            val projectId = parameters(exchange)["projectId"]!!
             val record = gateway.findObject(projectId.toLong())
             if (record != null) {
-                val project = ProjectInfoV2(record.id, record.accountId, record.name, record.active, record.funded, "project info")
-                mapper.writeValue(httpServletResponse.outputStream, project)
+                mapper.writeValueAsString(ProjectInfoV2(record.id, record.accountId, record.name, record.active, record.funded, "project info"))
+            } else {
+                throw IllegalStateException("Project with id $projectId not found")
             }
         }
     }

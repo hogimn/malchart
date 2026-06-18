@@ -6,27 +6,24 @@ import io.barinek.continuum.accounts.RegistrationService
 import io.barinek.continuum.jdbcsupport.DataSourceConfig
 import io.barinek.continuum.jdbcsupport.JdbcTemplate
 import io.barinek.continuum.jdbcsupport.TransactionManager
-import io.barinek.continuum.restsupport.BasicApp
+import io.barinek.continuum.restsupport.BasicServer
 import io.barinek.continuum.testsupport.TestControllerSupport
 import io.barinek.continuum.testsupport.TestScenarioSupport
 import io.barinek.continuum.users.UserDataGateway
 import io.barinek.continuum.users.UserInfo
-import org.eclipse.jetty.server.handler.HandlerList
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 
 class RegistrationControllerTest : TestControllerSupport() {
-    val dataSource = DataSourceConfig().createDataSource("registration")
+    val dataSource = DataSourceConfig().createDataSource("jdbc:mysql://localhost:3306/registration_test?user=uservices&password=uservices")
 
-    private var app: BasicApp = object : BasicApp() {
-        override fun getPort() = 8081
-
-        override fun handlerList() = HandlerList().apply {
+    private val server = object : BasicServer(8081) {
+        override fun registerContexts() {
             val transactionManager = TransactionManager(dataSource)
             val template = JdbcTemplate(dataSource)
-            addHandler(RegistrationController(mapper, RegistrationService(transactionManager, UserDataGateway(template), AccountDataGateway(template))))
+            context("/registration", RegistrationController(mapper, RegistrationService(transactionManager, UserDataGateway(template), AccountDataGateway(template))))
         }
     }
 
@@ -37,12 +34,12 @@ class RegistrationControllerTest : TestControllerSupport() {
             execute("delete from accounts")
             execute("delete from users")
         }
-        app.start()
+        server.start()
     }
 
     @After
     fun tearDown() {
-        app.stop()
+        server.stop()
     }
 
     @Test

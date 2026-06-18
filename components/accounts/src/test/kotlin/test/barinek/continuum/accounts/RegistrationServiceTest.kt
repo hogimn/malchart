@@ -10,8 +10,8 @@ import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 
-class RegistrationServiceTest() {
-    val dataSource = DataSourceConfig().createDataSource("registration")
+class RegistrationServiceTest {
+    val dataSource = DataSourceConfig().createDataSource("jdbc:mysql://localhost:3306/registration_test?user=uservices&password=uservices")
 
     @Before
     fun cleanDatabase() {

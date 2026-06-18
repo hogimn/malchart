@@ -1,7 +1,7 @@
-version "1.0-SNAPSHOT"
-
 dependencies {
-    compile project(":components:redis-support")
-    compile project(":components:rest-support")
-    compile project(":components:test-support")
+    implementation("redis.clients:jedis:$jedis_version")
+
+    implementation(project(":components:redis-support"))
+    implementation(project(":components:rest-support"))
+    implementation(project(":components:test-support"))
 }

@@ -7,8 +7,8 @@ import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 
-class ProjectDataGatewayTest() {
-    val dataSource = DataSourceConfig().createDataSource("registration")
+class ProjectDataGatewayTest {
+    val dataSource = DataSourceConfig().createDataSource("jdbc:mysql://localhost:3306/registration_test?user=uservices&password=uservices")
     val template = JdbcTemplate(dataSource)
     val gateway = ProjectDataGateway(template)
 

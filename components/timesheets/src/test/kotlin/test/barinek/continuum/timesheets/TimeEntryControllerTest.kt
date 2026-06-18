@@ -1,32 +1,32 @@
 package test.barinek.continuum.timesheets
 
 import com.fasterxml.jackson.core.type.TypeReference
-import com.nhaarman.mockito_kotlin.any
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.whenever
 import io.barinek.continuum.jdbcsupport.DataSourceConfig
 import io.barinek.continuum.jdbcsupport.JdbcTemplate
-import io.barinek.continuum.restsupport.BasicApp
+import io.barinek.continuum.restsupport.BasicServer
 import io.barinek.continuum.testsupport.TestControllerSupport
 import io.barinek.continuum.testsupport.TestScenarioSupport
-import io.barinek.continuum.timesheets.*
-import org.apache.http.message.BasicNameValuePair
-import org.eclipse.jetty.server.handler.HandlerList
+import io.barinek.continuum.timesheets.ProjectClient
+import io.barinek.continuum.timesheets.ProjectInfo
+import io.barinek.continuum.timesheets.TimeEntryController
+import io.barinek.continuum.timesheets.TimeEntryDataGateway
+import io.barinek.continuum.timesheets.TimeEntryInfo
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 import java.time.LocalDate
 import kotlin.test.assertEquals
 
 class TimeEntryControllerTest : TestControllerSupport() {
-    val dataSource = DataSourceConfig().createDataSource("timesheets")
+    val dataSource = DataSourceConfig().createDataSource("jdbc:mysql://localhost:3306/timesheets_test?user=uservices&password=uservices")
     val client = mock<ProjectClient>()
 
-    private var app: BasicApp = object : BasicApp() {
-        override fun getPort() = 8081
-
-        override fun handlerList() = HandlerList().apply {
-            addHandler(TimeEntryController(mapper, TimeEntryDataGateway(JdbcTemplate(dataSource)), client))
+    private val server = object : BasicServer(8081) {
+        override fun registerContexts() {
+            context("/time-entries", TimeEntryController(mapper, TimeEntryDataGateway(JdbcTemplate(dataSource)), client))
         }
     }
 
@@ -35,19 +35,19 @@ class TimeEntryControllerTest : TestControllerSupport() {
         JdbcTemplate(dataSource).apply {
             execute("delete from time_entries")
         }
-        app.start()
+        server.start()
     }
 
     @After
     fun tearDown() {
-        app.stop()
+        server.stop()
     }
 
     @Test
     fun testCreate() {
         TestScenarioSupport(dataSource).loadTestScenario("jacks-test-scenario")
 
-        whenever(client.getProject(any())).thenReturn(ProjectInfo(true, true))
+        whenever(client.getProject(any())).thenReturn(ProjectInfo(active = true, funded = true))
 
         val json = "{\"projectId\":55432,\"userId\":4765,\"date\":\"2015-05-17\",\"hours\":8}"
         val response = template.post("http://localhost:8081/time-entries", "application/json", json)
@@ -64,18 +64,18 @@ class TimeEntryControllerTest : TestControllerSupport() {
     fun testFailedCreate() {
         TestScenarioSupport(dataSource).loadTestScenario("jacks-test-scenario")
 
-        whenever(client.getProject(any())).thenReturn(ProjectInfo(true, false))
+        whenever(client.getProject(any())).thenReturn(ProjectInfo(active = true, funded = false))
 
         val json = "{\"projectId\":55432,\"userId\":4765,\"date\":\"2015-05-17\",\"hours\":8}"
         val response = template.post("http://localhost:8081/time-entries", "application/json", json)
-        assert(response.isBlank())
+        assertEquals("status_code 422", response)
     }
 
     @Test
     fun testFind() {
         TestScenarioSupport(dataSource).loadTestScenario("jacks-test-scenario")
 
-        val response = template.get("http://localhost:8081/time-entries", "application/json", BasicNameValuePair("userId", "4765"))
+        val response = template.get("http://localhost:8081/time-entries", "application/json", Pair("userId", "4765"))
         val stories: List<TimeEntryInfo> = mapper.readValue(response, object : TypeReference<List<TimeEntryInfo>>() {})
         val actual = stories.first()
 

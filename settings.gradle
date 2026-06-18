@@ -1,4 +1,4 @@
-rootProject.name = "appcontinuum"
+rootProject.name = "application-continuum"
 
 include "applications:allocations-server"
 include "applications:backlog-server"

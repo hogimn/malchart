@@ -7,7 +7,8 @@ class TestScenarioSupport(val dataSource: DataSource) {
     val template = JdbcTemplate(dataSource)
 
     fun loadTestScenario(name: String) {
-        this.javaClass.classLoader.getResourceAsStream(name + ".sql").reader().readLines()
+        @Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+        this.javaClass.classLoader.getResourceAsStream("$name.sql").reader().readLines()
                 .asSequence()
                 .filterNot(String::isNullOrBlank)
                 .forEach { template.execute(it) }

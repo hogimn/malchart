@@ -1,6 +1,4 @@
-version "1.0-SNAPSHOT"
-
 dependencies {
-    compile "com.zaxxer:HikariCP:3.4.5"
-    compile "mysql:mysql-connector-java:8.0.20"
+    implementation("com.zaxxer:HikariCP:$hikari_version")
+    implementation("com.mysql:mysql-connector-j:$mysql_connector_version")
 }

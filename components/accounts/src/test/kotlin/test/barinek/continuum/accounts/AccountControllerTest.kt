@@ -6,24 +6,20 @@ import io.barinek.continuum.accounts.AccountDataGateway
 import io.barinek.continuum.accounts.AccountInfo
 import io.barinek.continuum.jdbcsupport.DataSourceConfig
 import io.barinek.continuum.jdbcsupport.JdbcTemplate
-import io.barinek.continuum.restsupport.BasicApp
+import io.barinek.continuum.restsupport.BasicServer
 import io.barinek.continuum.testsupport.TestControllerSupport
 import io.barinek.continuum.testsupport.TestScenarioSupport
-import org.apache.http.message.BasicNameValuePair
-import org.eclipse.jetty.server.handler.HandlerList
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 
 class AccountControllerTest : TestControllerSupport() {
-    val dataSource = DataSourceConfig().createDataSource("registration")
+    val dataSource = DataSourceConfig().createDataSource("jdbc:mysql://localhost:3306/registration_test?user=uservices&password=uservices")
 
-    private var app: BasicApp = object : BasicApp() {
-        override fun getPort() = 8081
-
-        override fun handlerList() = HandlerList().apply {
-            addHandler(AccountController(mapper, AccountDataGateway(JdbcTemplate(dataSource))))
+    private val server = object : BasicServer(8081) {
+        override fun registerContexts() {
+            context("/accounts", AccountController(mapper, AccountDataGateway(JdbcTemplate(dataSource))))
         }
     }
 
@@ -34,19 +30,19 @@ class AccountControllerTest : TestControllerSupport() {
             execute("delete from accounts")
             execute("delete from users")
         }
-        app.start()
+        server.start()
     }
 
     @After
     fun tearDown() {
-        app.stop()
+        server.stop()
     }
 
     @Test
     fun testFind() {
         TestScenarioSupport(dataSource).loadTestScenario("jacks-test-scenario")
 
-        val ownerId = BasicNameValuePair("ownerId", "4765")
+        val ownerId = Pair("ownerId", "4765")
         val response = template.get("http://localhost:8081/accounts", "application/json", ownerId)
         val list: List<AccountInfo> = mapper.readValue(response, object : TypeReference<List<AccountInfo>>() {})
         val actual = list.first()

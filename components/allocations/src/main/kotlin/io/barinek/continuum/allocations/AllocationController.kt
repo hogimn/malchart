@@ -1,29 +1,27 @@
 package io.barinek.continuum.allocations
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.barinek.continuum.restsupport.BasicHandler
-import org.eclipse.jetty.server.Request
-import java.util.Arrays.asList
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import com.sun.net.httpserver.HttpExchange
+import io.barinek.continuum.restsupport.BasicController
 
-class AllocationController(val mapper: ObjectMapper, val gateway: AllocationDataGateway, val client: ProjectClient) : BasicHandler() {
+class AllocationController(val mapper: ObjectMapper, val gateway: AllocationDataGateway, val client: ProjectClient) : BasicController() {
 
-    override fun handle(s: String, request: Request, httpServletRequest: HttpServletRequest, httpServletResponse: HttpServletResponse) {
-        post("/allocations", asList("application/json", "application/vnd.appcontinuum.v1+json"), request, httpServletResponse) {
-            val allocation = mapper.readValue(request.reader, AllocationInfo::class.java)
+    override fun handle(exchange: HttpExchange): Boolean {
+        return post(exchange, "/allocations", listOf("application/json", "application/vnd.appcontinuum.v1+json")) {
+            val allocation = mapper.readValue(body(exchange), AllocationInfo::class.java)
 
             if (projectIsActive(allocation.projectId)) {
                 val record = gateway.create(allocation.projectId, allocation.userId, allocation.firstDay, allocation.lastDay)
-                mapper.writeValue(httpServletResponse.outputStream, AllocationInfo(record.id, record.projectId, record.userId, record.firstDay, record.lastDay, "allocation info"))
+                mapper.writeValueAsString(AllocationInfo(record.id, record.projectId, record.userId, record.firstDay, record.lastDay, "allocation info"))
+            } else {
+                throw IllegalStateException("Project ${allocation.projectId} is not active")
             }
-        }
-        get("/allocations", asList("application/json", "application/vnd.appcontinuum.v1+json"), request, httpServletResponse) {
-            val projectId = request.getParameter("projectId")
+        } || get(exchange, "/allocations", listOf("application/json", "application/vnd.appcontinuum.v1+json")) {
+            val projectId = parameters(exchange)["projectId"]!!
             val list = gateway.findBy(projectId.toLong()).map { record ->
                 AllocationInfo(record.id, record.projectId, record.userId, record.firstDay, record.lastDay, "allocation info")
             }
-            mapper.writeValue(httpServletResponse.outputStream, list)
+            mapper.writeValueAsString(list)
         }
     }
 

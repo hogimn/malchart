@@ -1,31 +1,20 @@
 package io.barinek.continuum.redissupport
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import redis.clients.jedis.JedisPool
-import redis.clients.jedis.JedisPoolConfig
+import redis.clients.jedis.DefaultJedisClientConfig
+import redis.clients.jedis.HostAndPort
+import redis.clients.jedis.RedisClient
+import redis.clients.jedis.UnifiedJedis
+
 
 open class RedisConfig {
-    fun getPool(name: String): JedisPool {
-        val json = System.getenv("VCAP_SERVICES")
-        val info = from(name, json)!!
-        return JedisPool(JedisPoolConfig(), info.host, info.port, 2000, info.password);
+    fun getClient(host: String, password: String, port: Int = 6379): UnifiedJedis {
+        val config = DefaultJedisClientConfig.builder()
+            .password(password)
+            .timeoutMillis(2000)
+            .build()
+        return RedisClient.builder()
+            .hostAndPort(HostAndPort(host, port))
+            .clientConfig(config)
+            .build()
     }
-
-    fun from(name: String, json: String): RedisInfo? {
-        val mapper = ObjectMapper()
-        val root = mapper.readTree(json)
-        root.findValue("rediscloud").forEach { service ->
-            val node = service.findValue("name")
-            if (node.textValue() == name) {
-                val credentials = service.findValue("credentials")
-                val host = credentials.findValue("hostname").textValue()
-                val port = credentials.findValue("port").intValue()
-                val password = credentials.findValue("password").textValue()
-                return RedisInfo(host, port, password)
-            }
-        }
-        return null
-    }
-
-    class RedisInfo(val host: String, val port: Int, val password: String)
 }

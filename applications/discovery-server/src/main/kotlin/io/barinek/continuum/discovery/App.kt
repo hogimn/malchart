@@ -1,25 +1,29 @@
 package io.barinek.continuum.discovery
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.barinek.continuum.redissupport.RedisConfig
-import io.barinek.continuum.restsupport.BasicApp
+import io.barinek.continuum.restsupport.BasicServer
 import io.barinek.continuum.restsupport.DefaultController
-import org.eclipse.jetty.server.handler.HandlerList
+import java.lang.System.getenv
 import java.util.*
 
-class App : BasicApp() {
-    override fun getPort() = System.getenv("PORT").toInt()
+class App(val host: String, val password: String, port: Int) : BasicServer(port) {
+    val mapper: ObjectMapper = ObjectMapper().registerKotlinModule().registerModule(JavaTimeModule())
 
-    override fun handlerList(): HandlerList {
-        val pool = RedisConfig().getPool("discovery")
+    override fun registerContexts() {
+        val client = RedisConfig().getClient(host, password)
 
-        return HandlerList().apply {  // ordered
-            addHandler(DiscoveryController(mapper, InstanceDataGateway(pool, 60000L)))
-            addHandler(DefaultController())
-        }
+        context("/discovery/apps", DiscoveryController(mapper, InstanceDataGateway(client, 60000L)))
+        context("/", DefaultController())
     }
 }
 
-fun main(args: Array<String>) {
+fun main() {
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
-    App().start()
+    val host = getenv("REDIS_HOST")
+    val password = getenv("REDIS_PASSWORD")
+    val port = getenv("PORT").toInt()
+    App(host, password, port).start()
 }

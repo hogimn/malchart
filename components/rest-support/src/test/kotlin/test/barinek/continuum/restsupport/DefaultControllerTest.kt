@@ -1,9 +1,8 @@
 package test.barinek.continuum.restsupport
 
-import io.barinek.continuum.restsupport.BasicApp
+import io.barinek.continuum.restsupport.BasicServer
 import io.barinek.continuum.restsupport.DefaultController
 import io.barinek.continuum.restsupport.RestTemplate
-import org.eclipse.jetty.server.handler.HandlerList
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -12,22 +11,20 @@ import kotlin.test.assertEquals
 class DefaultControllerTest {
     val template = RestTemplate()
 
-    private var app: BasicApp = object : BasicApp() {
-        override fun getPort() = 8081
-
-        override fun handlerList() = HandlerList().apply {
-            addHandler(DefaultController())
+    private val server = object : BasicServer(8081) {
+        override fun registerContexts() {
+            context("/", DefaultController())
         }
     }
 
     @Before
     fun setUp() {
-        app.start()
+        server.start()
     }
 
     @After
     fun tearDown() {
-        app.stop()
+        server.stop()
     }
 
     @Test

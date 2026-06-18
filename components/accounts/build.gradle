@@ -1,8 +1,9 @@
-version "1.0-SNAPSHOT"
-
 dependencies {
-    compile project(":components:jdbc-support")
-    compile project(":components:rest-support")
-    compile project(":components:test-support")
-    compile project(":components:users")
+    implementation(project(":components:jdbc-support"))
+    implementation(project(":components:rest-support"))
+    implementation(project(":components:test-support"))
+    implementation(project(":components:users"))
+
+    testImplementation("com.zaxxer:HikariCP:$hikari_version")
+    testImplementation("com.mysql:mysql-connector-j:$mysql_connector_version")
 }

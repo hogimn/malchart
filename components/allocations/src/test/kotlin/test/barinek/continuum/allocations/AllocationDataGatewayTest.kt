@@ -8,8 +8,8 @@ import org.junit.Test
 import java.time.LocalDate
 import kotlin.test.assertEquals
 
-class AllocationDataGatewayTest() {
-    val dataSource = DataSourceConfig().createDataSource("allocations")
+class AllocationDataGatewayTest {
+    val dataSource = DataSourceConfig().createDataSource("jdbc:mysql://localhost:3306/allocations_test?user=uservices&password=uservices")
     val template = JdbcTemplate(dataSource)
     val gateway = AllocationDataGateway(template)
     val now: LocalDate = LocalDate.now()

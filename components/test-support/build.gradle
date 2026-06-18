@@ -1,6 +1,4 @@
-version "1.0-SNAPSHOT"
-
 dependencies {
-    compile project(":components:jdbc-support")
-    compile project(":components:rest-support")
+    implementation(project(":components:jdbc-support"))
+    implementation(project(":components:rest-support"))
 }

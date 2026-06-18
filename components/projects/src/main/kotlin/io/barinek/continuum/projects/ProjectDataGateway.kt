@@ -16,6 +16,6 @@ class ProjectDataGateway(val jdbcTemplate: JdbcTemplate) {
 
     fun findObject(projectId: Long): ProjectRecord? {
         val sql = "select id, account_id, name, active, funded from projects where id = ? order by name asc"
-        return jdbcTemplate.findObject<ProjectRecord>(sql, { rs -> ProjectRecord(rs.getLong(1), rs.getLong(2), rs.getString(3), rs.getBoolean(4), rs.getBoolean(5)) }, projectId)
+        return jdbcTemplate.findObject(sql, { rs -> ProjectRecord(rs.getLong(1), rs.getLong(2), rs.getString(3), rs.getBoolean(4), rs.getBoolean(5)) }, projectId)
     }
 }

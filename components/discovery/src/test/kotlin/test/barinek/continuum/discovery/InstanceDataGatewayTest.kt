@@ -5,18 +5,19 @@ import io.barinek.continuum.redissupport.RedisConfig
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import redis.clients.jedis.params.SetParams
 
-class InstanceDataGatewayTest() {
-    val pool = RedisConfig().getPool("discovery")
+class InstanceDataGatewayTest {
+    val client = RedisConfig().getClient("localhost", "foobared")
 
     @Before
     fun cleanDatabase() {
-        pool.resource.flushAll()
+        client.flushAll()
     }
 
     @Test
     fun testHeartbeat() {
-        val gateway = InstanceDataGateway(pool, 5000L)
+        val gateway = InstanceDataGateway(client, 5000L)
 
         val instance = gateway.heartbeat("allocations", "http://localhost:8081")
 
@@ -26,9 +27,9 @@ class InstanceDataGatewayTest() {
 
     @Test
     fun testFindBy() {
-        pool.resource.psetex("allocations:http://localhost:8081", 5000L, "http://localhost:8081")
+        client.set("allocations:http://localhost:8081", "http://localhost:8081", SetParams().px(5000L))
 
-        val gateway = InstanceDataGateway(pool, 5000L)
+        val gateway = InstanceDataGateway(client, 5000L)
 
         val instance = gateway.findBy("allocations").first()
 
@@ -38,7 +39,7 @@ class InstanceDataGatewayTest() {
 
     @Test
     fun testExpired() {
-        val gateway = InstanceDataGateway(pool, 5L)
+        val gateway = InstanceDataGateway(client, 5L)
 
         gateway.heartbeat("allocations", "http://localhost:8081")
 

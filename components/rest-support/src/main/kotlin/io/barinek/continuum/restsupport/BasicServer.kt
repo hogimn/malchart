@@ -1,0 +1,38 @@
+package io.barinek.continuum.restsupport
+
+import com.sun.net.httpserver.HttpServer
+import com.sun.net.httpserver.HttpsServer
+import java.net.InetAddress
+import java.net.InetSocketAddress
+
+abstract class BasicServer(port: Int) {
+    protected val server: HttpServer = HttpServer.create(InetSocketAddress(port), 0)
+
+    abstract fun registerContexts()
+
+    open fun start() {
+        registerContexts()
+        server.start()
+    }
+
+    fun stop() {
+        server.stop(0)
+    }
+
+    fun uri(): String {
+        val scheme = if (server is HttpsServer) "https" else "http"
+        return "$scheme://${InetAddress.getLocalHost().hostAddress}:${server.address.port}"
+    }
+
+    protected fun context(path: String, vararg controllers: BasicController) {
+        server.createContext(path) { exchange ->
+            val body = exchange.requestBody.bufferedReader().readText()
+            exchange.setAttribute("body", body)
+            val handled = controllers.any { it.handle(exchange) }
+            if (!handled) {
+                exchange.sendResponseHeaders(404, -1)
+                exchange.close()
+            }
+        }
+    }
+}

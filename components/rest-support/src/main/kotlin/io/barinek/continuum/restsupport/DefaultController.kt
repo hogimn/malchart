@@ -1,14 +1,14 @@
 package io.barinek.continuum.restsupport
 
-import org.eclipse.jetty.server.Request
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import com.sun.net.httpserver.HttpExchange
 
-class DefaultController : BasicHandler() {
-    override fun handle(s: String, request: Request, httpServletRequest: HttpServletRequest, httpServletResponse: HttpServletResponse) {
-        httpServletResponse.contentType = "text/html; charset=UTF-8"
-        httpServletResponse.outputStream.write("Noop!".toByteArray())
-        httpServletResponse.status = HttpServletResponse.SC_OK
-        request.isHandled = true
+class DefaultController : BasicController() {
+    override fun handle(exchange: HttpExchange): Boolean {
+        val bytes = "Noop!".toByteArray()
+        exchange.responseHeaders.add("Content-Type", "text/html; charset=UTF-8")
+        exchange.sendResponseHeaders(200, bytes.size.toLong())
+        exchange.responseBody.write(bytes)
+        exchange.close()
+        return true
     }
 }

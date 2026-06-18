@@ -1,6 +1,5 @@
 package io.barinek.continuum.jdbcsupport
 
-import kotlinx.support.jdk7.use
 import java.sql.Connection
 import javax.sql.DataSource
 
