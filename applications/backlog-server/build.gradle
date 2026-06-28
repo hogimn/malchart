@@ -12,7 +12,7 @@ dependencies {
 
 jar {
     manifest {
-        attributes "Main-Class": "io.barinek.continuum.backlog.AppKt"
+        attributes "Main-Class": "com.hogimn.malchart.backlog.AppKt"
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {

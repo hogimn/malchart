@@ -14,7 +14,7 @@ dependencies {
 
 jar {
     manifest {
-        attributes "Main-Class": "io.barinek.continuum.registration.AppKt"
+        attributes "Main-Class": "com.hogimn.malchart.registration.AppKt"
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {

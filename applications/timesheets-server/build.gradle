@@ -12,7 +12,7 @@ dependencies {
 
 jar {
     manifest {
-        attributes "Main-Class": "io.barinek.continuum.timesheets.AppKt"
+        attributes "Main-Class": "com.hogimn.malchart.timesheets.AppKt"
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {
