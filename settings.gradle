@@ -1,4 +1,4 @@
-rootProject.name = "application-continuum"
+rootProject.name = "malchart"
 
 include "applications:allocations-server"
 include "applications:backlog-server"
