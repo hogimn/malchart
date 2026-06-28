@@ -10,18 +10,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      redis:
-        image: redis:alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --requirepass foobared
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -31,6 +19,12 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
+
+    - name: Start Redis and Configure Password
+      run: |
+        sudo apt-get update && sudo apt-get install -y redis-server
+        echo "requirepass foobared" | sudo tee -a /etc/redis/redis.conf
+        sudo systemctl restart redis-server
 
     - name: Start MySQL and Configure Timezone
       run: |
