@@ -6,17 +6,19 @@ import java.sql.Date
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Statement
+import java.sql.Timestamp
 import java.time.LocalDate
+import java.time.LocalDateTime
 import javax.sql.DataSource
 
 class JdbcTemplate(val dataSource: DataSource) {
 
-    fun <T> create(sql: String, id: (Long) -> T, vararg params: Any) =
+    fun <T> createWithGeneratedKeys(sql: String, id: (Long) -> T, vararg params: Any) =
             dataSource.connection.use { connection ->
-                create(connection, sql, id, *params)
+                createWithGeneratedKeys(connection, sql, id, *params)
             }
 
-    fun <T> create(connection: Connection, sql: String, id: (Long) -> T, vararg params: Any): T {
+    fun <T> createWithGeneratedKeys(connection: Connection, sql: String, id: (Long) -> T, vararg params: Any): T {
         return connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).use { statement ->
             for (i in params.indices) {
                 val param = params[i]
@@ -35,6 +37,37 @@ class JdbcTemplate(val dataSource: DataSource) {
             val keys = statement.generatedKeys
             keys.next()
             id(keys.getLong(1))
+        }
+    }
+
+    fun <T> create(sql: String, resultSupplier: () -> T, vararg params: Any) =
+        dataSource.connection.use { connection ->
+            create(connection, sql, resultSupplier, *params)
+        }
+
+    fun <T> create(connection: Connection, sql: String, resultSupplier: () -> T, vararg params: Any): T {
+        return connection.prepareStatement(sql).use { statement ->
+            bindParams(statement, params)
+            statement.executeUpdate()
+            resultSupplier()
+        }
+    }
+
+    private fun bindParams(statement: PreparedStatement, params: Array<out Any>) {
+        for (i in params.indices) {
+            val param = params[i]
+            val parameterIndex = i + 1
+
+            when (param) {
+                is String -> statement.setString(parameterIndex, param)
+                is Int -> statement.setInt(parameterIndex, param)
+                is Long -> statement.setLong(parameterIndex, param)
+                is Double -> statement.setDouble(parameterIndex, param)
+                is Boolean -> statement.setBoolean(parameterIndex, param)
+                is LocalDate -> statement.setDate(parameterIndex, Date.valueOf(param))
+                is LocalDateTime -> statement.setTimestamp(parameterIndex, Timestamp.valueOf(param))
+                else -> statement.setObject(parameterIndex, param)
+            }
         }
     }
 

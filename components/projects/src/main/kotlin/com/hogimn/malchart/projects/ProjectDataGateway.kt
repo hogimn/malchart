@@ -6,7 +6,7 @@ class ProjectDataGateway(val jdbcTemplate: JdbcTemplate) {
 
     fun create(accountId: Long, name: String, active: Boolean = true, funded: Boolean = false): ProjectRecord {
         val sql = "insert into projects (account_id, name, active, funded) values (?, ?, ?, ?)"
-        return jdbcTemplate.create(sql, { id -> ProjectRecord(id, accountId, name, active, funded) }, accountId, name, active, funded)
+        return jdbcTemplate.createWithGeneratedKeys(sql, { id -> ProjectRecord(id, accountId, name, active, funded) }, accountId, name, active, funded)
     }
 
     fun findBy(accountId: Long): List<ProjectRecord> {

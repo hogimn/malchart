@@ -7,11 +7,11 @@ class AccountDataGateway(val jdbcTemplate: JdbcTemplate) {
     val createSql = "insert into accounts (owner_id, name) values (?, ?)"
 
     fun create(ownerId: Long, name: String): AccountRecord {
-        return jdbcTemplate.create(createSql, { id -> AccountRecord(id, ownerId, name) }, ownerId, name)
+        return jdbcTemplate.createWithGeneratedKeys(createSql, { id -> AccountRecord(id, ownerId, name) }, ownerId, name)
     }
 
     fun create(connection: Connection, ownerId: Long, name: String): AccountRecord {
-        return jdbcTemplate.create(connection, createSql, { id -> AccountRecord(id, ownerId, name) }, ownerId, name)
+        return jdbcTemplate.createWithGeneratedKeys(connection, createSql, { id -> AccountRecord(id, ownerId, name) }, ownerId, name)
     }
 
     fun findBy(ownerId: Long): List<AccountRecord> {

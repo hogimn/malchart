@@ -6,7 +6,7 @@ class StoryDataGateway(val jdbcTemplate: JdbcTemplate) {
 
     fun create(projectId: Long, name: String): StoryRecord {
         val sql = "insert into stories (project_id, name) values (?, ?)"
-        return jdbcTemplate.create(sql, { id -> StoryRecord(id, projectId, name) }, projectId, name)
+        return jdbcTemplate.createWithGeneratedKeys(sql, { id -> StoryRecord(id, projectId, name) }, projectId, name)
     }
 
     fun findBy(projectId: Long): List<StoryRecord> {

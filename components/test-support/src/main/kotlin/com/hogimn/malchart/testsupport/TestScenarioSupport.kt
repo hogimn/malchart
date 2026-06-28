@@ -8,9 +8,12 @@ class TestScenarioSupport(val dataSource: DataSource) {
 
     fun loadTestScenario(name: String) {
         @Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-        this.javaClass.classLoader.getResourceAsStream("$name.sql").reader().readLines()
-                .asSequence()
-                .filterNot(String::isNullOrBlank)
-                .forEach { template.execute(it) }
+        val fullSql = this.javaClass.classLoader.getResourceAsStream("$name.sql").reader().readLines()
+            .joinToString("\n")
+
+        fullSql.split(";")
+            .map { it.trim() }
+            .filterNot { it.isBlank() }
+            .forEach { template.execute(it) }
     }
 }

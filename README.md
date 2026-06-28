@@ -48,25 +48,26 @@ v10             Circuit Breaker
 5. Database setup
    
     ```bash
-    mysql -v -uroot --execute="drop user 'uservices'@'localhost'"
-    mysql -v -uroot --execute="create user 'uservices'@'localhost' identified by 'uservices';"
+    sudo mysql -v -uroot --execute="drop user 'uservices'@'localhost'"
+    sudo mysql -v -uroot --execute="create user 'uservices'@'localhost' identified by 'uservices';"
 
-    for database_name in 'allocations' 'backlog' 'registration' 'timesheets'; do
-      mysql -v -uroot --execute="drop database if exists ${database_name}_test"
-      mysql -v -uroot --execute="create database ${database_name}_test"
-      mysql -v -uroot --execute="grant all on  ${database_name}_test.* to 'uservices'@'localhost';"
-      mysql -v -uroot --execute="grant select on performance_schema.* to 'uservices'@'localhost';"
+    for database_name in 'allocations' 'backlog' 'registration' 'timesheets' 'anime'; do
+      sudo mysql -v -uroot --execute="drop database if exists ${database_name}_test"
+      sudo mysql -v -uroot --execute="create database ${database_name}_test"
+      sudo mysql -v -uroot --execute="grant all on  ${database_name}_test.* to 'uservices'@'localhost';"
+      sudo mysql -v -uroot --execute="grant select on performance_schema.* to 'uservices'@'localhost';"
     done
-    mysql -v -uuservices -puservices registration_test --execute="select now();"
+    sudo mysql -v -uuservices -puservices registration_test --execute="select now();"
     ```
 
 6. Schema Migrations
 
    ```bash
-   flyway -reportEnabled=false -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/allocations_test" -locations=filesystem:databases/allocations-database clean migrate
-   flyway -reportEnabled=false -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/backlog_test" -locations=filesystem:databases/backlog-database clean migrate
-   flyway -reportEnabled=false -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/registration_test" -locations=filesystem:databases/registration-database clean migrate
-   flyway -reportEnabled=false -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/timesheets_test" -locations=filesystem:databases/timesheets-database clean migrate
+   flyway -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/allocations_test" -locations=filesystem:databases/allocations-database clean migrate
+   flyway -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/backlog_test" -locations=filesystem:databases/backlog-database clean migrate
+   flyway -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/registration_test" -locations=filesystem:databases/registration-database clean migrate
+   flyway -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/timesheets_test" -locations=filesystem:databases/timesheets-database clean migrate
+   flyway -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/anime_test" -locations=filesystem:databases/anime-database clean migrate
    ```
 
 7. Run tests

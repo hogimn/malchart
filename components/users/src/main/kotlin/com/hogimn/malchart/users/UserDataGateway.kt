@@ -7,11 +7,11 @@ class UserDataGateway(val jdbcTemplate: JdbcTemplate) {
     val createSql = "insert into users (name) values (?)"
 
     fun create(connection: Connection, name: String): UserRecord {
-        return jdbcTemplate.create(connection, createSql, { id -> UserRecord(id, name) }, name)
+        return jdbcTemplate.createWithGeneratedKeys(connection, createSql, { id -> UserRecord(id, name) }, name)
     }
 
     fun create(name: String): UserRecord {
-        return jdbcTemplate.create(createSql, { id -> UserRecord(id, name) }, name)
+        return jdbcTemplate.createWithGeneratedKeys(createSql, { id -> UserRecord(id, name) }, name)
     }
 
     fun findObjectBy(id: Long): UserRecord {

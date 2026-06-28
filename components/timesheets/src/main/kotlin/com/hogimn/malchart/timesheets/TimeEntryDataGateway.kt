@@ -7,7 +7,7 @@ class TimeEntryDataGateway(val jdbcTemplate: JdbcTemplate) {
 
     fun create(projectId: Long, userId: Long, date: LocalDate, hours: Int): TimeEntryRecord {
         val sql = "insert into time_entries (project_id, user_id, date, hours) values (?, ?, ?, ?)"
-        return jdbcTemplate.create(sql, { id -> TimeEntryRecord(id, projectId, userId, date, hours) }, projectId, userId, date, hours)
+        return jdbcTemplate.createWithGeneratedKeys(sql, { id -> TimeEntryRecord(id, projectId, userId, date, hours) }, projectId, userId, date, hours)
     }
 
     fun findBy(userId: Long): List<TimeEntryRecord> {

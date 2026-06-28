@@ -7,7 +7,7 @@ class AllocationDataGateway(val jdbcTemplate: JdbcTemplate) {
 
     fun create(projectId: Long, userId: Long, firstDay: LocalDate, lastDay: LocalDate): AllocationRecord {
         val sql = "insert into allocations (project_id, user_id, first_day, last_day) values (?, ?, ?, ?)"
-        return jdbcTemplate.create(sql, { id -> AllocationRecord(id, projectId, userId, firstDay, lastDay) }, projectId, userId, firstDay, lastDay)
+        return jdbcTemplate.createWithGeneratedKeys(sql, { id -> AllocationRecord(id, projectId, userId, firstDay, lastDay) }, projectId, userId, firstDay, lastDay)
     }
 
     fun findBy(projectId: Long): List<AllocationRecord> {
