@@ -123,3 +123,9 @@ java -jar applications/timesheets-server/build/libs/timesheets-server.jar
 | `DATABASE_URL` | application servers | JDBC URL for the server's mysql database |
 | `REDIS_HOST` / `REDIS_PASSWORD` | discovery server | Redis connection used for the service registry |
 | `DISCOVERY_SERVER_ENDPOINT` | application servers | Base URL of the discovery server for heartbeats and lookups |
+
+### License & Attribution
+This project is licensed under the Apache License 2.0. 
+It is a derivative work based on [application-continuum](https://github.com/initialcapacity/application-continuum) by initialcapacity. 
+
+The original architecture and source files have been modified and adapted for the `malchart` project, with the original commit history fully preserved.
