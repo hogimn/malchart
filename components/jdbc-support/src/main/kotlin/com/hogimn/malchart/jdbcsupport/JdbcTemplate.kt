@@ -14,9 +14,9 @@ import javax.sql.DataSource
 class JdbcTemplate(val dataSource: DataSource) {
 
     fun <T> createWithGeneratedKeys(sql: String, id: (Long) -> T, vararg params: Any) =
-            dataSource.connection.use { connection ->
-                createWithGeneratedKeys(connection, sql, id, *params)
-            }
+        dataSource.connection.use { connection ->
+            createWithGeneratedKeys(connection, sql, id, *params)
+        }
 
     fun <T> createWithGeneratedKeys(connection: Connection, sql: String, id: (Long) -> T, vararg params: Any): T {
         return connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).use { statement ->
@@ -81,6 +81,17 @@ class JdbcTemplate(val dataSource: DataSource) {
     }
 
     fun <T> findBy(sql: String, mapper: (ResultSet) -> T, id: Long) = query(sql, { ps -> ps.setLong(1, id) }, mapper)
+
+    fun <T> findObject(sql: String, mapper: (ResultSet) -> T, vararg params: Any): T? {
+        val list = query(sql, { ps -> bindParams(ps, params) }, mapper)
+        return when {
+            list.isEmpty() -> null
+            else -> list.first()
+        }
+    }
+
+    fun <T> findBy(sql: String, mapper: (ResultSet) -> T, vararg params: Any) =
+        query(sql, { ps -> bindParams(ps, params) }, mapper)
 
     /// USED FOR TESTING
 

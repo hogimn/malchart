@@ -5,9 +5,7 @@ import com.hogimn.malchart.jdbcsupport.DataSourceConfig
 import com.hogimn.malchart.jdbcsupport.JdbcTemplate
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.Date
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -25,7 +23,7 @@ class AnimeDataGatewayTest {
 
     @Test
     fun testCreate() {
-        val testId = 9999L
+        val testId = 9999
         val nowTime = LocalDateTime.now()
 
         val createdRecord = gateway.create(
@@ -44,10 +42,10 @@ class AnimeDataGatewayTest {
 
         val actual = template.query(
             "select id, title, score, season, year, synopsis from anime where id = ?",
-            { ps -> ps.setLong(1, testId) },
+            { ps -> ps.setInt(1, testId) },
             { rs ->
                 listOf(
-                    rs.getLong("id"),
+                    rs.getInt("id"),
                     rs.getString("title"),
                     rs.getDouble("score"),
                     rs.getString("season"),
@@ -68,7 +66,7 @@ class AnimeDataGatewayTest {
 
     @Test
     fun testFindBy() {
-        val testId = 7777L
+        val testId = 7777
         val insertSql = """
         insert into anime (
             id, title, link, image, score, members, genre, studios, source, season, year, 
@@ -80,16 +78,15 @@ class AnimeDataGatewayTest {
 
         template.execute(insertSql)
 
-        val results = gateway.findBy(testId)
+        val result = gateway.findObject(testId)
 
-        assertEquals(1, results.size)
-        val actual = results.first()
+        assertNotNull(result)
 
-        assertEquals(testId, actual.id)
-        assertEquals("Test Anime", actual.title)
-        assertEquals(8.8, actual.score)
-        assertEquals("WINTER", actual.season)
-        assertEquals(2026, actual.year)
-        assertEquals("Sci-Fi", actual.genre)
+        assertEquals(testId, result.id)
+        assertEquals("Test Anime", result.title)
+        assertEquals(8.8, result.score)
+        assertEquals("WINTER", result.season)
+        assertEquals(2026, result.year)
+        assertEquals("Sci-Fi", result.genre)
     }
 }

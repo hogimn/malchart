@@ -50,10 +50,9 @@ class AnimeControllerTest : TestControllerSupport() {
 
         val id = Pair("animeId", "4765")
         val response = template.get("http://localhost:8081/anime", "application/json", id)
-        val list: List<AnimeInfo> = mapper.readValue(response, object : TypeReference<List<AnimeInfo>>() {})
-        val actual = list.first()
+        val actual: AnimeInfo = mapper.readValue(response, object : TypeReference<AnimeInfo>() {})
 
-        assertEquals(4765L, actual.id)
+        assertEquals(4765, actual.id)
         assertEquals("Attack on Titan", actual.title)
         assertEquals("https://example.com/anime/4765", actual.link)
         assertEquals("https://example.com/img/4765.jpg", actual.image)

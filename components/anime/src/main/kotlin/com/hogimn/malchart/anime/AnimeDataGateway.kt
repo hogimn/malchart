@@ -25,7 +25,7 @@ class AnimeDataGateway(val jdbcTemplate: JdbcTemplate) {
     """.trimIndent()
 
     fun create(
-        id: Long, title: String, link: String, image: String, score:Double, members: Int,
+        id: Int, title: String, link: String, image: String, score: Double, members: Int,
         genre: String, studios: String, source: String, season: String, year: Int,
         rank: Int, popularity: Int, scoringCount: Int, episodes: Int, airStatus: String,
         type: String, startDate: LocalDateTime, endDate: LocalDateTime, englishTitle: String, japaneseTitle: String,
@@ -47,7 +47,7 @@ class AnimeDataGateway(val jdbcTemplate: JdbcTemplate) {
 
     fun create(
         connection: Connection,
-        id: Long, title: String, link: String, image: String, score: Double, members: Int,
+        id: Int, title: String, link: String, image: String, score: Double, members: Int,
         genre: String, studios: String, source: String, season: String, year: Int,
         rank: Int, popularity: Int, scoringCount: Int, episodes: Int, airStatus: String,
         type: String, startDate: LocalDateTime, endDate: LocalDateTime, englishTitle: String, japaneseTitle: String,
@@ -67,14 +67,14 @@ class AnimeDataGateway(val jdbcTemplate: JdbcTemplate) {
         )
     }
 
-    fun findBy(id: Long): List<AnimeRecord> {
-        val sql = "$selectSql WHERE id = ?"
-        return jdbcTemplate.findBy(sql, { rs -> mapRow(rs) }, id);
+    fun findObject(id: Int): AnimeRecord? {
+        val sql = "$selectSql where id = ?"
+        return jdbcTemplate.findObject(sql, { rs -> mapRow(rs) }, id)
     }
 
     private fun mapRow(rs: ResultSet): AnimeRecord {
         return AnimeRecord(
-            id = rs.getLong("id"),
+            id = rs.getInt("id"),
             title = rs.getString("title"),
             link = rs.getString("link"),
             image = rs.getString("image"),

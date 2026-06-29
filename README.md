@@ -51,7 +51,7 @@ v10             Circuit Breaker
     sudo mysql -v -uroot --execute="drop user 'uservices'@'localhost'"
     sudo mysql -v -uroot --execute="create user 'uservices'@'localhost' identified by 'uservices';"
 
-    for database_name in 'allocations' 'backlog' 'registration' 'timesheets' 'anime'; do
+    for database_name in 'allocations' 'backlog' 'registration' 'timesheets' 'anime' 'poll'; do
       sudo mysql -v -uroot --execute="drop database if exists ${database_name}_test"
       sudo mysql -v -uroot --execute="create database ${database_name}_test"
       sudo mysql -v -uroot --execute="grant all on  ${database_name}_test.* to 'uservices'@'localhost';"
@@ -68,6 +68,7 @@ v10             Circuit Breaker
    flyway -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/registration_test" -locations=filesystem:databases/registration-database clean migrate
    flyway -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/timesheets_test" -locations=filesystem:databases/timesheets-database clean migrate
    flyway -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/anime_test" -locations=filesystem:databases/anime-database clean migrate
+   flyway -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/poll_test" -locations=filesystem:databases/poll-database clean migrate
    ```
 
 7. Run tests

@@ -11,7 +11,7 @@ create table anime
     source          varchar(255),
     season          varchar(7),
     year            int,
-    `rank`           int,
+    `rank`          int,
     popularity      int,
     scoring_count   int,
     episodes        int,

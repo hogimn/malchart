@@ -3,7 +3,7 @@ package com.hogimn.malchart.anime
 import java.time.LocalDateTime
 
 data class AnimeRecord(
-    val id: Long,
+    val id: Int,
     val title: String,
     val link: String,
     val image: String,
