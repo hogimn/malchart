@@ -38,7 +38,7 @@ jobs:
         sudo mysql -v -uroot -proot --execute="DROP USER IF EXISTS 'uservices'@'localhost';"
         sudo mysql -v -uroot -proot --execute="CREATE USER 'uservices'@'localhost' IDENTIFIED BY 'uservices';"
         
-        for database_name in 'allocations' 'backlog' 'registration' 'timesheets' 'anime'; do
+        for database_name in 'allocations' 'backlog' 'registration' 'timesheets' 'anime' 'poll'; do
           sudo mysql -v -uroot -proot --execute="DROP DATABASE IF EXISTS ${database_name}_test"
           sudo mysql -v -uroot -proot --execute="CREATE DATABASE ${database_name}_test"
           sudo mysql -v -uroot -proot --execute="GRANT ALL ON ${database_name}_test.* TO 'uservices'@'localhost';"
@@ -57,6 +57,7 @@ jobs:
         flyway -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/registration_test" -locations=filesystem:databases/registration-database clean migrate
         flyway -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/timesheets_test" -locations=filesystem:databases/timesheets-database clean migrate
         flyway -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/anime_test" -locations=filesystem:databases/anime-database clean migrate
+        flyway -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/poll_test" -locations=filesystem:databases/poll-database clean migrate
 
     - name: Build with Gradle Wrapper
       run: |
