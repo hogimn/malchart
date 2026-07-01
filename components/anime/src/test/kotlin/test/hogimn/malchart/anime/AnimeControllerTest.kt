@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.hogimn.malchart.anime.AnimeController
 import com.hogimn.malchart.anime.AnimeDataGateway
 import com.hogimn.malchart.anime.AnimeInfo
+import com.hogimn.malchart.anime.AnimeRecord
+// 만약 gateway가 반환하는 타입이 AnimeRecord라면 아래 주석을 풀고 사용하세요.
+// import com.hogimn.malchart.anime.AnimeRecord
 import com.hogimn.malchart.jdbcsupport.DataSourceConfig
 import com.hogimn.malchart.jdbcsupport.JdbcTemplate
 import com.hogimn.malchart.restsupport.BasicServer
@@ -83,5 +86,56 @@ class AnimeControllerTest : TestControllerSupport() {
         assertEquals("R - 17+", actual.rating)
         assertEquals("SFW", actual.nsfw)
         assertEquals("anime info", actual.info)
+    }
+
+    @Test
+    fun testFindByYearAndSeason() {
+        TestScenarioSupport(dataSource).loadTestScenario("jacks-test-scenario")
+
+        val params = listOf(
+            Pair("year", "2013"),
+            Pair("season", "SPRING")
+        )
+
+        val response =
+            template.get("http://localhost:8081/anime/by-year-and-season", "application/json", *params.toTypedArray())
+
+        val actual: List<AnimeInfo> =
+            mapper.readValue(response, object : TypeReference<List<AnimeInfo>>() {})
+
+        assertEquals(1, actual.size)
+
+        val record = actual[0]
+        assertEquals(4765, record.id)
+        assertEquals("Attack on Titan", record.title)
+        assertEquals("https://example.com/anime/4765", record.link)
+        assertEquals("https://example.com/img/4765.jpg", record.image)
+        assertEquals(9.12, record.score)
+        assertEquals(2500000, record.members)
+        assertEquals("Action, Fantasy", record.genre)
+        assertEquals("WIT Studio", record.studios)
+        assertEquals("Manga", record.source)
+        assertEquals("SPRING", record.season)
+        assertEquals(2013, record.year)
+        assertEquals(2, record.rank)
+        assertEquals(1, record.popularity)
+        assertEquals(1800000, record.scoringCount)
+        assertEquals(25, record.episodes)
+        assertEquals("Finished Airing", record.airStatus)
+        assertEquals("TV", record.type)
+        assertEquals(LocalDateTime.of(2013, 4, 7, 0, 0, 0), record.startDate)
+        assertEquals(LocalDateTime.of(2013, 9, 29, 0, 0, 0), record.endDate)
+        assertEquals("Attack on Titan", record.englishTitle)
+        assertEquals("Shingeki no Kyojin", record.japaneseTitle)
+        assertEquals(
+            "Centuries ago, mankind was slaughtered to near extinction by monstrous humanoid creatures called Titans...",
+            record.synopsis
+        )
+        assertEquals(LocalDateTime.of(2026, 6, 28, 21, 0, 0), record.createdAt)
+        assertEquals(LocalDateTime.of(2026, 6, 28, 21, 0, 0), record.updatedAt)
+        assertEquals("https://example.com/img/4765_large.jpg", record.largeImage)
+        assertEquals("R - 17+", record.rating)
+        assertEquals("SFW", record.nsfw)
+        assertEquals("anime info", record.info)
     }
 }

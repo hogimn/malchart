@@ -72,6 +72,17 @@ class AnimeDataGateway(val jdbcTemplate: JdbcTemplate) {
         return jdbcTemplate.findObject(sql, { rs -> mapRow(rs) }, id)
     }
 
+    fun findByYearAndSeason(year: Int, season: String): List<AnimeRecord> {
+        val sql = "$selectSql where year = ? and season = ?"
+        return jdbcTemplate.query(
+            sql,
+            { ps ->
+                ps.setInt(1, year)
+                ps.setString(2, season)
+            },
+            { rs -> mapRow(rs) })
+    }
+
     private fun mapRow(rs: ResultSet): AnimeRecord {
         return AnimeRecord(
             id = rs.getInt("id"),
@@ -103,4 +114,5 @@ class AnimeDataGateway(val jdbcTemplate: JdbcTemplate) {
             nsfw = rs.getString("nsfw")
         )
     }
+
 }
