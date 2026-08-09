@@ -63,3 +63,22 @@ export const ImageWrapper = styled.div`
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     position: relative;
 `;
+
+export const UpdateTimeWrapper = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    font-size: 0.72rem;
+    color: #999999;
+    margin-top: 8px;
+    padding-bottom: 4px;
+    padding-right: 4px;
+    box-sizing: border-box;
+    width: 100%;
+    
+    svg {
+        font-size: 0.8rem;
+        opacity: 0.75;
+    }
+`;

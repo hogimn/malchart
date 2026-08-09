@@ -6,10 +6,24 @@ import AnimePollGraph from "./AnimePollGraph";
 import LazyGraphWrapper from "./LazyGraphWrapper";
 import {toScoreLabel} from "../../../utils/strUtil";
 import {FaStar, FaTrophy, FaUserFriends, FaVoteYea} from "react-icons/fa";
-import {MdTrendingUp} from "react-icons/md";
-import {AnimeImageWrapper, AnimeSubWrapper, AnimeWrapper, ImageWrapper, OverlayBox,} from "./styles/AnimeCard.style";
+import {MdTrendingUp, MdUpdate} from "react-icons/md";
+import {
+    AnimeImageWrapper,
+    AnimeSubWrapper,
+    AnimeWrapper,
+    ImageWrapper,
+    OverlayBox,
+    UpdateTimeWrapper,
+} from "./styles/AnimeCard.style";
 
 const AnimeCard = ({anime, onImageClick}) => {
+    const formatUpdatedAt = (dateString) => {
+        if (!dateString) return null;
+        const replaced = dateString.replace('T', ' ');
+        const cleanDate = replaced.replace(/-/g, '.');
+        return cleanDate.substring(0, 19)
+    };
+
     return (
         <AnimeWrapper sm={24} md={12} lg={12} xl={8} xxl={8}>
             <AnimeSubWrapper>
@@ -18,11 +32,9 @@ const AnimeCard = ({anime, onImageClick}) => {
                         <AnimeImage alt={anime.title} src={anime.image}/>
                         <OverlayBox>
                             <span><FaStar title="Score"/> {toScoreLabel(anime.score)}</span>
-                            <span><FaVoteYea
-                                title="Votes"/> {anime.scoringCount?.toLocaleString() || "N/A"}</span>
+                            <span><FaVoteYea title="Votes"/> {anime.scoringCount?.toLocaleString() || "N/A"}</span>
                             <span><FaTrophy title="Rank"/> {anime.rank?.toLocaleString() || "N/A"}</span>
-                            <span><FaUserFriends
-                                title="Members"/> {anime.members?.toLocaleString() || "N/A"}</span>
+                            <span><FaUserFriends title="Members"/> {anime.members?.toLocaleString() || "N/A"}</span>
                             <span><MdTrendingUp
                                 title="Popularity"/> {anime.popularity?.toLocaleString() || "N/A"}</span>
                         </OverlayBox>
@@ -30,11 +42,16 @@ const AnimeCard = ({anime, onImageClick}) => {
                     <AnimeDescription anime={anime}/>
                 </AnimeImageWrapper>
 
-                <CommonCol style={{display: "flex", flexDirection: "column", alignItems: "flex-start"}}>
-                    <LazyGraphWrapper>
-                        <AnimePollGraph episodeDistribution={anime.episodeDistribution}/>
-                    </LazyGraphWrapper>
-                </CommonCol>
+                <LazyGraphWrapper>
+                    <AnimePollGraph episodeDistribution={anime.episodeDistribution}/>
+                </LazyGraphWrapper>
+
+                {anime.updatedAt && (
+                    <UpdateTimeWrapper title={`Updated at: ${anime.updatedAt}`}>
+                        <MdUpdate/>
+                        <span>Updated {formatUpdatedAt(anime.updatedAt)}</span>
+                    </UpdateTimeWrapper>
+                )}
             </AnimeSubWrapper>
         </AnimeWrapper>
     );
