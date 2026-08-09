@@ -4,7 +4,7 @@ The evolution of a component-based architecture
 
 See Git tags for step-by-step notes.
 
-```bash
+```
 git tag -ln
 
 v1              First commit
@@ -23,7 +23,7 @@ v10             Circuit Breaker
 
 1. Install Redis
 
-    ```bash
+    ```
     sudo apt update
     sudo apt install redis-server -y
     sudo systemctl enable redis-server
@@ -32,43 +32,35 @@ v10             Circuit Breaker
 
 2. Modify `/etc/redis/redis.conf`
 
-    ```bash
+    Uncomment `requirepass foobared` and set your password
+    ```
     sudo vim /etc/redis/redis.conf
+    sudo systemctl restart redis-server
     ```
 
-    - Uncomment `requirepass foobared` and set your password
+4. Install MySQL
 
     ```
-      sudo systemctl restart redis-server
-    ```
-
-3. Install MySQL
-
-    ```bash
     sudo apt update
     sudo apt install mysql-server -y
     sudo systemctl enable mysql
     sudo systemctl start mysql
     ```
 
-4. Modify `/etc/mysql/mysql.conf.d/mysqld.cnf` (or create a custom config file)
+5. Modify `/etc/mysql/mysql.conf.d/mysqld.cnf` (or create a custom config file)
 
-    ```text
-    default-time-zone='+00:00'
     ```
-    - Restart MySQL to apply changes:
-
-    ```bash
+    default-time-zone='+00:00'
     sudo systemctl restart mysql
     ```
 
-5. Database Setup
+6. Database Setup
 
     ```bash
     sudo mysql -v -uroot --execute="drop user 'uservices'@'localhost'"
     sudo mysql -v -uroot --execute="create user 'uservices'@'localhost' identified by 'uservices';"
 
-    for database_name in  'anime' 'poll'; do
+    for database_name in 'anime' 'poll'; do
       sudo mysql -v -uroot --execute="drop database if exists test_${database_name}"
       sudo mysql -v -uroot --execute="create database test_${database_name}"
       sudo mysql -v -uroot --execute="grant all on  test_${database_name}.* to 'uservices'@'localhost';"
@@ -83,7 +75,7 @@ v10             Circuit Breaker
     sudo mysql -v -uuservices -puservices test_anime --execute="select now();"
     ```
 
-6. Schema Migrations
+7. Schema Migrations
 
    ```bash
    flyway -cleanDisabled=false -user=uservices -password=uservices -url="jdbc:mysql://localhost:3306/test_anime" -locations=filesystem:databases/anime-database clean migrate
