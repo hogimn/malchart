@@ -367,6 +367,8 @@ class PollControllerTest : TestControllerSupport() {
         assertEquals(targetType, actual.contentType)
         assertEquals(1, actual.episodeDistribution.size)
 
+        assertNotNull(actual.maxUpdatedAt)
+
         val ep1 = actual.episodeDistribution[1]
         assertNotNull(ep1)
         assertEquals("3.40", ep1["averageScore"])

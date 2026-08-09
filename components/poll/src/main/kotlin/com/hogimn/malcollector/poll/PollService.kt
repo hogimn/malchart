@@ -76,11 +76,13 @@ class PollService(val gateway: PollDataGateway) {
         }
 
         val distribution = buildEpisodeDistribution(records)
+        val maxUpdatedAt = records.maxOfOrNull { it.updatedAt }
 
         return PollSummaryInfo(
             contentId = contentId,
             contentType = contentType,
-            episodeDistribution = distribution
+            episodeDistribution = distribution,
+            maxUpdatedAt = maxUpdatedAt
         )
     }
 
@@ -91,10 +93,13 @@ class PollService(val gateway: PollDataGateway) {
 
         return records.groupBy { it.contentId }
             .map { (contentId, contentRecords) ->
+                val maxUpdatedAt = contentRecords.maxOfOrNull { it.updatedAt }
+
                 PollSummaryInfo(
                     contentId = contentId,
                     contentType = contentType,
-                    episodeDistribution = buildEpisodeDistribution(contentRecords)
+                    episodeDistribution = buildEpisodeDistribution(contentRecords),
+                    maxUpdatedAt = maxUpdatedAt
                 )
             }
     }

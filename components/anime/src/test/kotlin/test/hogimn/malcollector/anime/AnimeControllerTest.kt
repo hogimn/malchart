@@ -21,28 +21,32 @@ import kotlin.test.assertTrue
 class AnimeControllerTest : TestControllerSupport() {
     val dataSource =
         DataSourceConfig().createDataSource("jdbc:mysql://localhost:3306/test_anime?user=uservices&password=uservices")
+    val maxUpdatedAt: LocalDateTime? = LocalDateTime.of(2026, 6, 28, 22, 0, 0)
 
     private val testPollClient = object : PollClient(mapper, RestTemplate()) {
         override fun fetchPollContentIds(contentType: String): Set<Int> {
             return setOf(1001, 1002)
         }
 
-        override fun fetchEpisodeDistribution(contentId: Int, contentType: String): Map<Int, Map<String, Any>> {
-            return mapOf(
+        override fun fetchEpisodeDistribution(contentId: Int, contentType: String)
+                : Pair<Map<Int, Map<String, Any>>?, LocalDateTime?> {
+            val distribution = mapOf(
                 1 to mapOf("count" to 100, "score" to 4.5),
                 2 to mapOf("count" to 85, "score" to 4.2)
             )
+            return Pair(distribution, maxUpdatedAt)
         }
 
         override fun fetchEpisodeDistributions(
             contentIds: List<Int>,
             contentType: String
-        ): Map<Int, Map<Int, Map<String, Any>>> {
+        ): Map<Int, Pair<Map<Int, Map<String, Any>>?, LocalDateTime?>> {
             return contentIds.associateWith {
-                mapOf(
+                val distribution = mapOf(
                     1 to mapOf("count" to 100, "score" to 4.5),
                     2 to mapOf("count" to 85, "score" to 4.2)
                 )
+                Pair(distribution, maxUpdatedAt)
             }
         }
     }
@@ -179,7 +183,7 @@ class AnimeControllerTest : TestControllerSupport() {
             actual.synopsis
         )
         assertEquals(LocalDateTime.of(2026, 6, 28, 21, 0, 0), actual.createdAt)
-        assertEquals(LocalDateTime.of(2026, 6, 28, 21, 0, 0), actual.updatedAt)
+        assertEquals(maxUpdatedAt, actual.updatedAt)
         assertEquals("https://example.com/img/4765_large.jpg", actual.largeImage)
         assertEquals("R - 17+", actual.rating)
         assertEquals("SFW", actual.nsfw)
@@ -231,7 +235,7 @@ class AnimeControllerTest : TestControllerSupport() {
             record.synopsis
         )
         assertEquals(LocalDateTime.of(2026, 6, 28, 21, 0, 0), record.createdAt)
-        assertEquals(LocalDateTime.of(2026, 6, 28, 21, 0, 0), record.updatedAt)
+        assertEquals(maxUpdatedAt, record.updatedAt)
         assertEquals("https://example.com/img/4765_large.jpg", record.largeImage)
         assertEquals("R - 17+", record.rating)
         assertEquals("SFW", record.nsfw)
@@ -334,7 +338,7 @@ class AnimeControllerTest : TestControllerSupport() {
 
         val now = LocalDateTime.now()
         assert(actual.createdAt!!.isAfter(now.minusSeconds(5)) && actual.createdAt.isBefore(now.plusSeconds(5)))
-        assert(actual.updatedAt!!.isAfter(now.minusSeconds(5)) && actual.updatedAt.isBefore(now.plusSeconds(5)))
+        assertEquals(maxUpdatedAt, actual.updatedAt)
 
         val idParam = Pair("id", "9999")
         val getResponse = template.get("http://localhost:8081/anime", "application/json", idParam)

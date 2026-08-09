@@ -3,6 +3,7 @@ package com.hogimn.malcollector.anime
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.hogimn.malcollector.restsupport.BasicController
 import com.sun.net.httpserver.HttpExchange
+import java.time.LocalDateTime
 
 class AnimeController(val mapper: ObjectMapper, val gateway: AnimeDataGateway, val pollClient: PollClient) :
     BasicController() {
@@ -15,8 +16,8 @@ class AnimeController(val mapper: ObjectMapper, val gateway: AnimeDataGateway, v
             val id = parameters(exchange)["id"]!!
             val record = gateway.findObject(id.toInt())
             if (record != null) {
-                val distribution = pollClient.fetchEpisodeDistribution(record.id, "anime")
-                mapper.writeValueAsString(record.toAnimeInfo("anime info", distribution))
+                val (distribution, maxUpdatedAt) = pollClient.fetchEpisodeDistribution(record.id, "anime")
+                mapper.writeValueAsString(record.toAnimeInfo("anime info", distribution, maxUpdatedAt))
             } else {
                 throw IllegalStateException("Anime with id $id not found")
             }
@@ -28,6 +29,7 @@ class AnimeController(val mapper: ObjectMapper, val gateway: AnimeDataGateway, v
             val records = gateway.findByYearAndSeason(year, season)
 
             val ids = records.map { it.id }
+
             val distributionsMap = if (ids.isNotEmpty()) {
                 pollClient.fetchEpisodeDistributions(ids, "anime")
             } else {
@@ -35,7 +37,11 @@ class AnimeController(val mapper: ObjectMapper, val gateway: AnimeDataGateway, v
             }
 
             val animeInfoList = records.map { record ->
-                record.toAnimeInfo("anime info", distributionsMap[record.id])
+                val pollData = distributionsMap[record.id]
+                val distribution = pollData?.first
+                val maxUpdatedAt = pollData?.second
+
+                record.toAnimeInfo("anime info", distribution, maxUpdatedAt)
             }
             mapper.writeValueAsString(animeInfoList)
         } || get(
@@ -81,8 +87,8 @@ class AnimeController(val mapper: ObjectMapper, val gateway: AnimeDataGateway, v
 
             if (updatedRows > 0) {
                 val record = gateway.findObject(request.id)!!
-                val distribution = pollClient.fetchEpisodeDistribution(record.id, "anime")
-                mapper.writeValueAsString(record.toAnimeInfo("anime updated", distribution))
+                val (distribution, maxUpdatedAt) = pollClient.fetchEpisodeDistribution(record.id, "anime")
+                mapper.writeValueAsString(record.toAnimeInfo("anime updated", distribution, maxUpdatedAt))
             } else {
                 throw IllegalStateException("Anime with id ${request.id} not found to update")
             }
@@ -117,8 +123,8 @@ class AnimeController(val mapper: ObjectMapper, val gateway: AnimeDataGateway, v
                 nsfw = inputData.nsfw
             )
 
-            val distribution = pollClient.fetchEpisodeDistribution(newRecord.id, "anime")
-            mapper.writeValueAsString(newRecord.toAnimeInfo("anime created", distribution))
+            val (distribution, maxUpdatedAt) = pollClient.fetchEpisodeDistribution(newRecord.id, "anime")
+            mapper.writeValueAsString(newRecord.toAnimeInfo("anime created", distribution, maxUpdatedAt))
         } || post(exchange, "/anime/upsert", mediaTypes) {
             val inputData = mapper.readValue(body(exchange), AnimeInfo::class.java)
 
@@ -150,15 +156,18 @@ class AnimeController(val mapper: ObjectMapper, val gateway: AnimeDataGateway, v
                 nsfw = inputData.nsfw
             )
 
-            val distribution = pollClient.fetchEpisodeDistribution(newRecord.id, "anime")
-            mapper.writeValueAsString(newRecord.toAnimeInfo("anime upserted", distribution))
+            val (distribution, maxUpdatedAt) = pollClient.fetchEpisodeDistribution(newRecord.id, "anime")
+            mapper.writeValueAsString(newRecord.toAnimeInfo("anime upserted", distribution, maxUpdatedAt))
         }
     }
 
     private fun AnimeRecord.toAnimeInfo(
         info: String,
-        episodeDistribution: Map<Int, Map<String, Any>>?
+        episodeDistribution: Map<Int, Map<String, Any>>? = null,
+        maxUpdatedAt: LocalDateTime? = null
     ): AnimeInfo {
+        val finalUpdatedAt = maxUpdatedAt ?: this.updatedAt
+
         return AnimeInfo(
             id = this.id,
             title = this.title,
@@ -183,7 +192,7 @@ class AnimeController(val mapper: ObjectMapper, val gateway: AnimeDataGateway, v
             japaneseTitle = this.japaneseTitle,
             synopsis = this.synopsis,
             createdAt = this.createdAt,
-            updatedAt = this.updatedAt,
+            updatedAt = finalUpdatedAt,
             largeImage = this.largeImage,
             rating = this.rating,
             nsfw = this.nsfw,

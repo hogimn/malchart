@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.hogimn.malcollector.circuitbreakersupport.CircuitBreaker
 import com.hogimn.malcollector.discoverysupport.DiscoveryClient
 import com.hogimn.malcollector.restsupport.RestTemplate
+import java.time.LocalDateTime
 
 open class PollClient(val mapper: ObjectMapper, val template: RestTemplate) {
     private val circuitBreaker = CircuitBreaker()
@@ -25,7 +26,10 @@ open class PollClient(val mapper: ObjectMapper, val template: RestTemplate) {
         return idList.toSet()
     }
 
-    open fun fetchEpisodeDistribution(contentId: Int, contentType: String): Map<Int, Map<String, Any>>? {
+    open fun fetchEpisodeDistribution(
+        contentId: Int,
+        contentType: String
+    ): Pair<Map<Int, Map<String, Any>>?, LocalDateTime?> {
         return try {
             val endpoint = DiscoveryClient(mapper, template).getUrl("poll")
 
@@ -34,22 +38,37 @@ open class PollClient(val mapper: ObjectMapper, val template: RestTemplate) {
             }, fallback())
 
             if (response.isNullOrBlank()) {
-                return null
+                return Pair(null, null)
             }
 
             val jsonNode: JsonNode = mapper.readTree(response)
-            val distributionNode = jsonNode.get("episodeDistribution") ?: return null
 
-            mapper.convertValue(distributionNode, object : TypeReference<Map<Int, Map<String, Any>>>() {})
+            val distributionNode = jsonNode.get("episodeDistribution")
+            val distribution = if (distributionNode != null && !distributionNode.isNull) {
+                mapper.convertValue(distributionNode, object : TypeReference<Map<Int, Map<String, Any>>>() {})
+            } else {
+                null
+            }
+
+            val maxUpdatedAtNode = jsonNode.get("maxUpdatedAt")
+            val maxUpdatedAt = if (maxUpdatedAtNode != null && !maxUpdatedAtNode.isNull && !maxUpdatedAtNode.asText()
+                    .isNullOrBlank()
+            ) {
+                LocalDateTime.parse(maxUpdatedAtNode.asText())
+            } else {
+                null
+            }
+
+            Pair(distribution, maxUpdatedAt)
         } catch (_: Exception) {
-            null
+            Pair(null, null)
         }
     }
 
     open fun fetchEpisodeDistributions(
         contentIds: List<Int>,
         contentType: String
-    ): Map<Int, Map<Int, Map<String, Any>>> {
+    ): Map<Int, Pair<Map<Int, Map<String, Any>>?, LocalDateTime?>> {
         if (contentIds.isEmpty()) return emptyMap()
 
         return try {
@@ -68,17 +87,33 @@ open class PollClient(val mapper: ObjectMapper, val template: RestTemplate) {
             }
 
             val jsonNode: JsonNode = mapper.readTree(response)
-            val resultMap = mutableMapOf<Int, Map<Int, Map<String, Any>>>()
+            val resultMap = mutableMapOf<Int, Pair<Map<Int, Map<String, Any>>?, LocalDateTime?>>()
 
             if (jsonNode.isArray) {
                 for (node in jsonNode) {
                     val contentId = node.get("contentId")?.asInt() ?: continue
-                    val distNode = node.get("episodeDistribution") ?: continue
-                    val distMap: Map<Int, Map<String, Any>> = mapper.convertValue(
-                        distNode,
-                        object : TypeReference<Map<Int, Map<String, Any>>>() {}
-                    )
-                    resultMap[contentId] = distMap
+
+                    val distNode = node.get("episodeDistribution")
+                    val distMap = if (distNode != null && !distNode.isNull) {
+                        mapper.convertValue(
+                            distNode,
+                            object : TypeReference<Map<Int, Map<String, Any>>>() {}
+                        )
+                    } else {
+                        null
+                    }
+
+                    val maxUpdatedAtNode = node.get("maxUpdatedAt")
+                    val maxUpdatedAt = if (maxUpdatedAtNode != null
+                        && !maxUpdatedAtNode.isNull
+                        && !maxUpdatedAtNode.asText().isNullOrBlank()
+                    ) {
+                        LocalDateTime.parse(maxUpdatedAtNode.asText())
+                    } else {
+                        null
+                    }
+
+                    resultMap[contentId] = Pair(distMap, maxUpdatedAt)
                 }
             }
 
